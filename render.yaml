@@ -3,7 +3,6 @@ services:
     name: sistema-limpeza
     env: docker
     dockerfilePath: ./Dockerfile
-    
     # Força a atualização do Git
     secretFiles:
       - key: firebase-credentials.json
