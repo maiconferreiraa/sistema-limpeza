@@ -3,16 +3,13 @@ services:
     name: sistema-limpeza
     env: docker
     dockerfilePath: ./Dockerfile
-    # Força a atualização do Git
     secretFiles:
       - key: firebase-credentials.json
         mountPath: /app/firebase-credentials.json
-    # Configurações de Saúde e Auto-Deploy
     healthCheck:
       path: /
       initialDelaySeconds: 60
     autoDeploy: true
     envVars:
-      # O Gunicorn precisa disto para funcionar bem com Docker
       - key: WEB_CONCURRENCY
         value: 4
