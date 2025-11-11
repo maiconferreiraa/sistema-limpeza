@@ -7,7 +7,6 @@ services:
     secretFiles:
       - key: firebase-credentials.json
         mountPath: /app/firebase-credentials.json
-
     # Configurações de Saúde e Auto-Deploy
     healthCheck:
       path: /
