@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: sistema-limpeza
+    env: docker
+    dockerfilePath: ./Dockerfile
+    
+    # Adiciona a regra para o seu arquivo secreto do Firebase
+    secretFiles:
+      - key: firebase-credentials.json
+        mountPath: /app/firebase-credentials.json
+
+    # Configurações de Saúde e Auto-Deploy
+    healthCheck:
+      path: /
+      initialDelaySeconds: 60
+    autoDeploy: true
+    envVars:
+      # O Gunicorn precisa disto para funcionar bem com Docker
+      - key: WEB_CONCURRENCY
+        value: 4
