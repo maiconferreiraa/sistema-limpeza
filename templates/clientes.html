@@ -1,0 +1,112 @@
+{% extends "layout.html" %}
+{% block title %}Gerenciar Clientes{% endblock %}
+
+{% block content %}
+<h1 class="mb-4 text-primary-emphasis"><i class="bi bi-people-fill"></i> Gerenciar Clientes</h1>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card h-100 shadow-sm border-secondary">
+            <div class="card-header">
+                <h2 class="h4 mb-0">Cadastrar Novo Cliente</h2>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('gerenciar_clientes') }}" method="POST">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="nome" class="form-label">Nome Completo</label>
+                            <input type="text" class="form-control" id="nome" name="nome" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="telefone" class="form-label">Telefone</label>
+                            <input type="text" class="form-control" id="telefone" name="telefone">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="tipo" class="form-label">Tipo de Cliente</label>
+                            <select class="form-select" id="tipo" name="tipo">
+                                <option value="" selected>Selecione...</option>
+                                <option value="Automotivo">Automotivo</option>
+                                <option value="Residencial">Residencial</option>
+                            </select>
+                        </div>
+                        <div class="col-md-9">
+                            <label for="endereco" class="form-label">Endereço</label>
+                            <input type="text" class="form-control" id="endereco" name="endereco">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="numero" class="form-label">Número</label>
+                            <input type="text" class="form-control" id="numero" name="numero">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="bairro" class="form-label">Bairro</label>
+                            <input type="text" class="form-control" id="bairro" name="bairro">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="cidade" class="form-label">Cidade</label>
+                            <input type="text" class="form-control" id="cidade" name="cidade">
+                        </div>
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+                                <i class="bi bi-person-plus-fill"></i> Salvar Cliente
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-7">
+        <div class="card h-100 shadow-sm border-secondary">
+            <div class="card-header">
+                <h2 class="h4 mb-0">Clientes Cadastrados</h2>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Telefone</th>
+                                <th>Cidade</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in clientes %}
+                            {% set cliente = doc.to_dict() %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('cliente_detalhe', cliente_id=doc.id) }}" class="text-primary-emphasis fw-bold" title="Ver Histórico">
+                                        {{ cliente.nome }}
+                                    </a>
+                                </td>
+                                <td>{{ cliente.telefone | default('N/A', true) }}</td>
+                                <td>{{ cliente.cidade | default('N/A', true) }}</td>
+                                
+                                <td class="text-end">
+                                    <a href="{{ url_for('editar_cliente', cliente_id=doc.id) }}" class="btn btn-sm btn-outline-warning" title="Editar">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </a>
+                                    
+                                    <form action="{{ url_for('apagar_cliente', cliente_id=doc.id) }}" method="POST" style="display: inline-block; margin-left: 5px;">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Apagar"
+                                                onclick="return confirm('Tem certeza que deseja apagar o cliente \'{{ cliente.nome }}\'? Esta ação não pode ser desfeita.')">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center text-body-secondary">Nenhum cliente cadastrado.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

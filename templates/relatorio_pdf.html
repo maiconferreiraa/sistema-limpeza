@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório de Serviços</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            font-size: 12px;
+            color: #333;
+        }
+        .container {
+            width: 95%;
+            margin: 20px auto;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #00bcd4; /* Cor ciano */
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            color: #00bcd4;
+            margin: 0;
+        }
+        .header p {
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        .filtro-info {
+            background-color: #f4f4f4;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .filtro-info p {
+            margin: 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            color: #000;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .total {
+            margin-top: 20px;
+            text-align: right;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        .total-valor {
+            color: #28a745; /* Verde */
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 10px;
+            color: #888;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <div class="header">
+            <h1>Sistema de Higienização</h1>
+            <p>Relatório de Serviços Prestados</p>
+        </div>
+
+        <div class="filtro-info">
+            <p><strong>Período do Relatório:</strong> 
+                {{ data_inicio.split('-') | reverse | join('/') }} até 
+                {{ data_fim.split('-') | reverse | join('/') }}
+            </p>
+            <p><strong>Cliente:</strong> {{ cliente_filtro }}</p>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Cliente</th>
+                    <th>Serviço</th>
+                    <th style="text-align: right;">Valor Pago</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for servico in servicos %}
+                <tr>
+                    <td>{{ servico.data.split('T')[0].split('-') | reverse | join('/') }}</td>
+                    <td>{{ servico.cliente_nome }}</td>
+                    <td>{{ servico.servico_nome }}</td>
+                    <td style="text-align: right;">R$ {{ "%.2f"|format(servico.valor_pago) }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center;">Nenhum serviço encontrado para este período.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr style="background: #f2f2f2; font-weight: bold;">
+                    <td colspan="3" style="text-align: right;">TOTAL DO PERÍODO</td>
+                    <td style="text-align: right;">R$ {{ "%.2f"|format(total) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="total">
+            Valor Total: 
+            <span class="total-valor">R$ {{ "%.2f"|format(total) }}</span>
+        </div>
+
+        <div class="footer">
+            <p>Relatório gerado em {{ data_emissao }}</p>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block title %}Editar Serviço{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('gerenciar_servicos') }}" class="btn btn-outline-secondary btn-sm mb-3">
+    <i class="bi bi-arrow-left"></i> Voltar sem salvar
+</a>
+
+<h1 class="mb-4 text-primary-emphasis"><i class="bi bi-pencil-fill"></i> Editar Serviço</h1>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card h-100 shadow-sm border-secondary">
+            <div class="card-body p-4">
+                <form action="{{ url_for('editar_servico', servico_id=servico_id) }}" method="POST">
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">Nome do Serviço</label>
+                        <input type="text" class="form-control" id="nome" name="nome" value="{{ servico.nome }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="preco_padrao" class="form-label">Preço Padrão (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="preco_padrao" name="preco_padrao" value="{{ servico.preco_padrao }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="categoria" class="form-label">Categoria</label>
+                        <select class="form-select" id="categoria" name="categoria" required>
+                            <option value="" {% if not servico.categoria %}selected{% endif %}>Selecione...</option>
+                            <option value="Automotivo" {% if servico.categoria == 'Automotivo' %}selected{% endif %}>Automotivo</option>
+                            <option value="Residencial" {% if servico.categoria == 'Residencial' %}selected{% endif %}>Residencial</option>
+                            <option value="Outro" {% if servico.categoria == 'Outro' %}selected{% endif %}>Outro</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100 py-2 fw-bold">
+                        <i class="bi bi-check-circle-fill"></i> Salvar Alterações
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

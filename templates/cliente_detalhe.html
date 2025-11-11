@@ -1,0 +1,64 @@
+{% extends "layout.html" %}
+{% block title %}{{ cliente.nome }}{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('gerenciar_clientes') }}" class="btn btn-outline-secondary btn-sm mb-3">
+    <i class="bi bi-arrow-left"></i> Voltar para Clientes
+</a>
+
+<div class="card shadow-sm border-secondary mb-4">
+    <div class="card-body">
+        <h1 class="h3 text-primary-emphasis">{{ cliente.nome }}</h1>
+        <p class="lead text-body-secondary mb-2">
+            <strong>Telefone:</strong> {{ cliente.telefone | default('N/A', true) }} | <strong>Tipo:</strong> {{ cliente.tipo }}
+        </p>
+        <p class="text-body-secondary mb-0">
+            <i class="bi bi-geo-alt-fill text-primary-emphasis"></i> 
+            {% if cliente.endereco %}
+                {{ cliente.endereco }}, {{ cliente.numero }} - {{ cliente.bairro }}<br>
+                {{ cliente.cidade }}
+            {% else %}
+                Endereço não cadastrado.
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-secondary">
+    <div class="card-header">
+        <h2 class="h4 mb-0">Histórico de Serviços</h2>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Serviço</th>
+                        <th class="text-end">Valor Pago</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for servico in servicos %}
+                    <tr>
+                        <td>{{ servico.data.split('T')[0].split('-') | reverse | join('/') }}</td>
+                        <td>{{ servico.servico_nome }}</td>
+                        <td class="text-end">R$ {{ "%.2f"|format(servico.valor_pago) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="text-center text-body-secondary">Nenhum serviço registrado para este cliente.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="border-top-2">
+                    <tr class="fw-bold">
+                        <td colspan="2">TOTAL GASTO PELO CLIENTE</td>
+                        <td class="text-end text-success fs-5">R$ {{ "%.2f"|format(total_gasto) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

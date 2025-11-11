@@ -1,0 +1,62 @@
+/* 1. Definição das Cores Customizadas (Tema) */
+:root {
+  --bs-primary: #00bcd4;
+  --bs-primary-rgb: 0, 188, 212;
+  --bs-primary-text-emphasis: #00dffc;
+  --bs-primary-bg-subtle: #002e35;
+  --bs-primary-border-subtle: #005f6b;
+  
+  --bs-body-bg: #212529;
+  --bs-body-color: #dee2e6;
+  --bs-border-color: #495057;
+  --bs-secondary: #6c757d;
+  
+  --bs-dark-subtle: #1a1d20; /* Cor de fundo da Navbar */
+}
+
+/* 2. Ajustes finos no tema escuro */
+body {
+    padding-top: 56px; /* Ajusta o corpo para a navbar fixa (sticky-top) */
+}
+
+.card, .modal-content, .list-group-item {
+    background-color: #2c3034;
+    border: 1px solid var(--bs-border-color);
+}
+
+.table {
+    --bs-table-bg: #2c3034;
+    --bs-table-border-color: #495057;
+    --bs-table-hover-bg: #373b3e;
+}
+
+.form-control, .form-select {
+    background-color: #343a40;
+    border-color: #495057;
+    color: #fff;
+}
+.form-control:focus, .form-select:focus {
+    background-color: #343a40;
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+    color: #fff;
+}
+.form-control::placeholder {
+    color: #6c757d;
+}
+
+/* 3. Ajuste Navbar Ativa */
+.navbar-nav .nav-link.active {
+    color: var(--bs-primary-text-emphasis) !important;
+}
+
+/* 4. Estilo do Modal "Sobre" */
+.modal-footer.footer-info {
+    background-color: var(--bs-body-bg); /* Usa o fundo escuro principal */
+    border-top: 1px solid var(--bs-border-color);
+    justify-content: flex-start; /* Alinha à esquerda */
+}
+
+.modal-footer.footer-info strong {
+    color: var(--bs-primary-text-emphasis); /* Cor ciano de destaque */
+}
