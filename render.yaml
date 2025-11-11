@@ -1,15 +1,15 @@
 services:
-  - type: web
-    name: sistema-limpeza
-    env: docker
-    dockerfilePath: ./Dockerfile
-    secretFiles:
-      - key: firebase-credentials.json
-        mountPath: /app/firebase-credentials.json
-    healthCheck:
-      path: /
-      initialDelaySeconds: 60
-    autoDeploy: true
-    envVars:
-      - key: WEB_CONCURRENCY
-        value: 4
+..- type: web
+....name: sistema-limpeza
+....env: docker
+....dockerfilePath: ./Dockerfile
+....secretFiles:
+......- key: firebase-credentials.json
+........mountPath: /app/firebase-credentials.json
+....healthCheck:
+......path: /
+......initialDelaySeconds: 60
+....autoDeploy: true
+....envVars:
+......- key: WEB_CONCURRENCY
+........value: 4
