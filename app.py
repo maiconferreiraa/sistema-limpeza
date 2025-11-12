@@ -4,14 +4,16 @@ from flask import (Flask, render_template, request, redirect, url_for,
                    g, flash, jsonify, make_response)
 from datetime import datetime, date
 
-# --- NOVAS IMPORTAÇÕES DO FIREBASE ---
+# --- IMPORTAÇÕES DO FIREBASE ---
 import firebase_admin
 from firebase_admin import credentials, firestore
+# Importação corrigida para a nova sintaxe de filtros
+from google.cloud.firestore_v1.base_query import FieldFilter 
 
 app = Flask(__name__)
 app.secret_key = 'sua-chave-secreta-muito-segura' 
 
-# --- NOVA CONFIGURAÇÃO DO BANCO DE DADOS (FIREBASE) ---
+# --- CONFIGURAÇÃO DO BANCO DE DADOS (FIREBASE) ---
 try:
     cred = credentials.Certificate("firebase-credentials.json")
     
@@ -27,16 +29,7 @@ try:
 except FileNotFoundError:
     print("-----------------------------------------------------------------")
     print("ERRO CRÍTICO: Arquivo 'firebase-credentials.json' não encontrado.")
-    print("Baixe o arquivo do seu painel do Firebase e coloque-o nesta pasta.")
     print("-----------------------------------------------------------------")
-    db = None
-except Exception as e:
-    print(f"ERRO AO CONECTAR NO FIREBASE: {e}")
-    db = None
-
-except FileNotFoundError:
-    print("ERRO: Arquivo 'firebase-credentials.json' não encontrado.")
-    print("Certifique-se de que o arquivo está na mesma pasta do app.py")
     db = None
 except Exception as e:
     print(f"ERRO AO CONECTAR NO FIREBASE: {e}")
@@ -55,16 +48,16 @@ def relatorios():
     data_fim = request.form.get('data_fim', data_fim_default)
     cliente_id_filtro = request.form.get('cliente_id_filtro', 'todos')
 
-    # Query base no Firestore
-    query = db.collection('servicos_registrados').where('data', '>=', data_inicio).where('data', '<=', data_fim)
+    # Query base no Firestore (SINTAXE CORRIGIDA)
+    query = db.collection('servicos_registrados').where(filter=FieldFilter('data', '>=', data_inicio)).where(filter=FieldFilter('data', '<=', data_fim))
 
     if cliente_id_filtro != 'todos':
-        query = query.where('cliente_id', '==', cliente_id_filtro)
+        # SINTAXE CORRIGIDA
+        query = query.where(filter=FieldFilter('cliente_id', '==', cliente_id_filtro))
 
     # Executa a query
     servicos_docs = query.order_by('data', direction='DESCENDING').stream()
     
-    # É preciso recriar a lista para calcular o total (stream() só pode ser lido uma vez)
     servicos_registrados = [doc.to_dict() for doc in servicos_docs]
     total_periodo = sum(s['valor_pago'] for s in servicos_registrados)
     
@@ -74,7 +67,7 @@ def relatorios():
     return render_template('relatorios.html', 
                            servicos=servicos_registrados, 
                            total=total_periodo,
-                           clientes=clientes_docs, # Passa o iterator de documentos
+                           clientes=clientes_docs,
                            data_inicio=data_inicio,
                            data_fim=data_fim,
                            cliente_filtro=cliente_id_filtro)
@@ -92,22 +85,19 @@ def registrar_servico():
         valor_pago = request.form['valor_pago']
         
         # --- Lógica de Desnormalização (NoSQL) ---
-        # 1. Buscar o nome do cliente
         cliente_doc = db.collection('clientes').document(cliente_id).get()
         cliente_nome = cliente_doc.to_dict().get('nome', 'Cliente Deletado') if cliente_doc.exists else "ID Cliente Inválido"
         
-        # 2. Buscar o nome do serviço
         servico_doc = db.collection('tipos_servicos').document(servico_id).get()
         servico_nome = servico_doc.to_dict().get('nome', 'Serviço Deletado') if servico_doc.exists else "ID Serviço Inválido"
 
-        # 3. Criar o novo documento de registro
         novo_registro = {
             'cliente_id': cliente_id,
             'cliente_nome': cliente_nome,
             'servico_id': servico_id,
             'servico_nome': servico_nome,
             'data': data,
-            'valor_pago': float(valor_pago) # Salva como número
+            'valor_pago': float(valor_pago)
         }
         
         db.collection('servicos_registrados').add(novo_registro)
@@ -131,14 +121,12 @@ def gerenciar_clientes():
     """Página para listar e cadastrar novos clientes."""
     
     if request.method == 'POST':
-        # Pega dados do formulário e converte para dict
         data = request.form.to_dict()
         db.collection('clientes').add(data)
         
         flash(f"Cliente '{data['nome']}' cadastrado com sucesso!", 'success')
         return redirect(url_for('gerenciar_clientes'))
 
-    # GET: Lista todos os clientes
     clientes_docs = db.collection('clientes').order_by('nome').stream()
     return render_template('clientes.html', clientes=clientes_docs)
 
@@ -150,8 +138,8 @@ def cliente_detalhe(cliente_id):
     if not cliente_doc.exists:
         return "Cliente não encontrado", 404
         
-    # Query de sub-coleção
-    servicos_docs = db.collection('servicos_registrados').where('cliente_id', '==', cliente_id).order_by('data', direction='DESCENDING').stream()
+    # SINTAXE CORRIGIDA
+    servicos_docs = db.collection('servicos_registrados').where(filter=FieldFilter('cliente_id', '==', cliente_id)).order_by('data', direction='DESCENDING').stream()
     
     servicos_registrados = [doc.to_dict() for doc in servicos_docs]
     total_gasto = sum(s['valor_pago'] for s in servicos_registrados)
@@ -174,7 +162,6 @@ def editar_cliente(cliente_id):
         flash(f"Cliente '{data['nome']}' atualizado com sucesso!", 'success')
         return redirect(url_for('gerenciar_clientes'))
 
-    # GET: Mostra o formulário preenchido
     cliente = cliente_ref.get()
     if not cliente.exists:
         flash("Cliente não encontrado.", 'danger')
@@ -185,14 +172,12 @@ def editar_cliente(cliente_id):
 @app.route('/cliente/apagar/<string:cliente_id>', methods=['POST'])
 def apagar_cliente(cliente_id):
     """Rota para apagar um cliente (ignora o histórico)."""
+    # Esta é a versão sem trava de segurança, como você pediu
     try:
         db.collection('clientes').document(cliente_id).delete()
         flash("Cliente apagado com sucesso.", 'success')
     except Exception as e:
         flash(f"Ocorreu um erro ao apagar: {e}", 'danger')
-    
-    # Os relatórios antigos deste cliente PERMANECERÃO no sistema,
-    # pois os nomes são copiados no registro.
     
     return redirect(url_for('gerenciar_clientes'))
 
@@ -204,13 +189,13 @@ def gerenciar_servicos():
     
     if request.method == 'POST':
         data = request.form.to_dict()
-        # Converte o preço para número antes de salvar
         data['preco_padrao'] = float(data['preco_padrao'])
         db.collection('tipos_servicos').add(data)
         
         flash(f"Serviço '{data['nome']}' cadastrado com sucesso!", 'success')
         return redirect(url_for('gerenciar_servicos'))
 
+    # Sintaxe corrigida (sem 'ASC')
     servicos_docs = db.collection('tipos_servicos').order_by('categoria').order_by('nome').stream()
     return render_template('servicos.html', servicos=servicos_docs)
 
@@ -238,14 +223,12 @@ def editar_servico(servico_id):
 @app.route('/servico/apagar/<string:servico_id>', methods=['POST'])
 def apagar_servico(servico_id):
     """Rota para apagar um tipo de serviço (ignora o histórico)."""
+    # Esta é a versão sem trava de segurança, como você pediu
     try:
         db.collection('tipos_servicos').document(servico_id).delete()
         flash("Serviço apagado com sucesso.", 'success')
     except Exception as e:
         flash(f"Ocorreu um erro ao apagar: {e}", 'danger')
-        
-    # Os relatórios antigos com este serviço PERMANECERÃO.
-    # O serviço apenas não aparecerá mais na lista para novos registros.
     
     return redirect(url_for('gerenciar_servicos'))
 
@@ -264,11 +247,13 @@ def gerar_relatorio_pdf():
     if not data_fim:
         data_fim = date.today().isoformat()
         
-    query = db.collection('servicos_registrados').where('data', '>=', data_inicio).where('data', '<=', data_fim)
+    # SINTAXE CORRIGIDA
+    query = db.collection('servicos_registrados').where(filter=FieldFilter('data', '>=', data_inicio)).where(filter=FieldFilter('data', '<=', data_fim))
 
     cliente_nome_filtro = "Todos"
     if cliente_id_filtro and cliente_id_filtro != 'todos':
-        query = query.where('cliente_id', '==', cliente_id_filtro)
+        # SINTAXE CORRIGIDA
+        query = query.where(filter=FieldFilter('cliente_id', '==', cliente_id_filtro))
         cliente = db.collection('clientes').document(cliente_id_filtro).get()
         if cliente.exists:
             cliente_nome_filtro = cliente.to_dict().get('nome')
