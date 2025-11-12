@@ -207,10 +207,26 @@ def editar_servico(servico_id):
     
     if request.method == 'POST':
         data = request.form.to_dict()
-        data['preco_padrao'] = float(data['preco_padrao'])
-        servico_ref.update(data)
         
-        flash(f"Serviço '{data['nome']}' atualizado com sucesso!", 'success')
+        # --- NOVA LÓGICA DA CATEGORIA ---
+        categoria_selecionada = data.get('categoria')
+        
+        # Se o usuário escolheu "Outro"
+        if categoria_selecionada == 'Outro':
+            # Nós substituímos 'categoria' pelo valor que ele digitou
+            # Se ele não digitou nada, guardamos "Outro" por defeito
+            data['categoria'] = data.get('categoria_outra', 'Outro').strip()
+        
+        # Remove o campo 'categoria_outra' do 'data' 
+        # para não guardar lixo no banco de dados
+        if 'categoria_outra' in data:
+            del data['categoria_outra']
+        # --- FIM DA NOVA LÓGICA ---
+            
+        data['preco_padrao'] = float(data['preco_padrao'])
+        db.collection('tipos_servicos').add(data)
+        
+        flash(f"Serviço '{data['nome']}' cadastrado com sucesso!", 'success')
         return redirect(url_for('gerenciar_servicos'))
 
     servico = servico_ref.get()

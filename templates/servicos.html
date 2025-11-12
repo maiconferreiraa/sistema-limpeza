@@ -27,8 +27,13 @@
                             <option value="" disabled selected>Selecione...</option>
                             <option value="Automotivo">Automotivo</option>
                             <option value="Residencial">Residencial</option>
-                            <option value="Outro">Outro</option>
+                            <option value="Outro">Outro (Especificar)</option>
                         </select>
+                    </div>
+
+                    <div class="mb-3" id="campo_categoria_outra" style="display: none;">
+                        <label for="categoria_outra" class="form-label">Qual categoria?</label>
+                        <input type="text" class="form-control" id="categoria_outra" name="categoria_outra">
                     </div>
                     <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
                         <i class="bi bi-plus-circle"></i> Salvar Serviço
