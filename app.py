@@ -184,16 +184,15 @@ def editar_cliente(cliente_id):
 
 @app.route('/cliente/apagar/<string:cliente_id>', methods=['POST'])
 def apagar_cliente(cliente_id):
-    """Rota para apagar um cliente."""
-    
-    # No NoSQL, precisamos verificar manualmente se há dependências
-    registros = db.collection('servicos_registrados').where('cliente_id', '==', cliente_id).limit(1).stream()
-    
-    if len(list(registros)) > 0:
-        flash("ERRO: Este cliente não pode ser apagado pois possui serviços registrados no histórico.", 'danger')
-    else:
+    """Rota para apagar um cliente (ignora o histórico)."""
+    try:
         db.collection('clientes').document(cliente_id).delete()
         flash("Cliente apagado com sucesso.", 'success')
+    except Exception as e:
+        flash(f"Ocorreu um erro ao apagar: {e}", 'danger')
+    
+    # Os relatórios antigos deste cliente PERMANECERÃO no sistema,
+    # pois os nomes são copiados no registro.
     
     return redirect(url_for('gerenciar_clientes'))
 
@@ -238,16 +237,15 @@ def editar_servico(servico_id):
 
 @app.route('/servico/apagar/<string:servico_id>', methods=['POST'])
 def apagar_servico(servico_id):
-    """Rota para apagar um tipo de serviço."""
-    
-    # Verifica dependências
-    registros = db.collection('servicos_registrados').where('servico_id', '==', servico_id).limit(1).stream()
-    
-    if len(list(registros)) > 0:
-        flash("ERRO: Este serviço não pode ser apagado pois está sendo usado em relatórios.", 'danger')
-    else:
+    """Rota para apagar um tipo de serviço (ignora o histórico)."""
+    try:
         db.collection('tipos_servicos').document(servico_id).delete()
         flash("Serviço apagado com sucesso.", 'success')
+    except Exception as e:
+        flash(f"Ocorreu um erro ao apagar: {e}", 'danger')
+        
+    # Os relatórios antigos com este serviço PERMANECERÃO.
+    # O serviço apenas não aparecerá mais na lista para novos registros.
     
     return redirect(url_for('gerenciar_servicos'))
 
