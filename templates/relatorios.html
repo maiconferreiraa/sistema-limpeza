@@ -60,7 +60,7 @@
                         <th scope="col">Data</th>
                         <th scope="col">Cliente</th>
                         <th scope="col">Serviço</th>
-                        <th scope="col" class="text-end">Valor Pago</th>
+                        <th scope="col">Categoria</th> <th scope="col" class="text-end">Valor Pago</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -69,17 +69,24 @@
                         <td>{{ servico.data.split('T')[0].split('-') | reverse | join('/') }}</td>
                         <td>{{ servico.cliente_nome }}</td>
                         <td>{{ servico.servico_nome }}</td>
+                        
+                        <td>
+                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill">
+                                {{ servico.servico_categoria | default('N/A') }}
+                            </span>
+                        </td>
+
                         <td class="text-end">R$ {{ "%.2f"|format(servico.valor_pago) }}</td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" class="text-center text-body-secondary">Nenhum serviço encontrado para este período.</td>
+                        <td colspan="5" class="text-center text-body-secondary">Nenhum serviço encontrado para este período.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
                 <tfoot class="border-top-2">
                     <tr class="fw-bold fs-5">
-                        <td colspan="3">TOTAL DO PERÍODO</td>
+                        <td colspan="4">TOTAL DO PERÍODO</td>
                         <td class="text-end text-success">R$ {{ "%.2f"|format(total) }}</td>
                     </tr>
                 </tfoot>
