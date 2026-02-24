@@ -1,0 +1,72 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1 class="mb-4 text-primary-emphasis"><i class="bi bi-calculator"></i> Novo Orçamento</h1>
+
+<div class="card shadow-sm border-secondary">
+    <div class="card-body">
+        <form action="{{ url_for('gerar_orcamento_pdf') }}" method="POST">
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <label class="form-label">Selecionar Cliente</label>
+                    <select name="cliente_id" class="form-select" required>
+                        <option value="">Selecione o cliente...</option>
+                        {% for c in clientes %}
+                        <option value="{{ c.id }}">{{ c.to_dict().nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Validade (Dias)</label>
+                    <input type="number" name="validade" class="form-control" value="7">
+                </div>
+            </div>
+
+            <h5 class="border-bottom pb-2">Serviços</h5>
+            <div id="container-servicos">
+                <div class="row g-2 mb-2 servico-item">
+                    <div class="col-md-8">
+                        <select name="servicos[]" class="form-select" required>
+                            <option value="">Selecione o serviço...</option>
+                            {% for s in servicos %}
+                            <option value="{{ s.id }}">{{ s.to_dict().nome }} (R$ {{ s.to_dict().preco_padrao }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="number" name="quantidades[]" class="form-control" placeholder="Qtd" value="1" min="1">
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-outline-danger w-100" onclick="removerLinha(this)"><i class="bi bi-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="adicionarLinha()">
+                <i class="bi bi-plus-lg"></i> Adicionar Mais um Serviço
+            </button>
+
+            <hr>
+            <button type="submit" class="btn btn-success w-100 py-3 fw-bold">
+                <i class="bi bi-file-earmark-pdf"></i> GERAR ORÇAMENTO EM PDF
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function adicionarLinha() {
+    const container = document.getElementById('container-servicos');
+    const novaLinha = container.firstElementChild.cloneNode(true);
+    novaLinha.querySelector('select').value = "";
+    novaLinha.querySelector('input').value = "1";
+    container.appendChild(novaLinha);
+}
+
+function removerLinha(btn) {
+    const container = document.getElementById('container-servicos');
+    if (container.children.length > 1) {
+        btn.closest('.servico-item').remove();
+    }
+}
+</script>
+{% endblock %}

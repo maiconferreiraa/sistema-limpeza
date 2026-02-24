@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Orçamento - {{ empresa.nome_empresa }}</title>
+    <style>
+        body { font-family: sans-serif; padding: 30px; color: #333; }
+        
+        /* Cabeçalho com Logo e Nome Dinâmico */
+        .header { text-align: center; border-bottom: 2px solid #0d6efd; padding-bottom: 15px; margin-bottom: 30px; }
+        .header img { max-height: 80px; margin-bottom: 10px; }
+        .header h1 { margin: 0; color: #0d6efd; text-transform: uppercase; font-size: 24px; }
+        .header p { margin: 5px 0; font-size: 14px; color: #666; }
+
+        .cliente-box { background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 30px; border-left: 5px solid #0d6efd; }
+        .cliente-box strong { color: #0d6efd; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #0d6efd; color: white; padding: 12px; text-align: left; text-transform: uppercase; font-size: 13px; }
+        td { padding: 12px; border-bottom: 1px solid #ddd; font-size: 14px; }
+        
+        .total { text-align: right; margin-top: 40px; font-size: 22px; font-weight: bold; color: #198754; border-top: 2px solid #eee; padding-top: 10px; }
+        
+        .footer { margin-top: 60px; font-size: 12px; color: #777; text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
+        .validade-tag { font-weight: bold; color: #d32f2f; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if empresa.logo_base64 %}
+            <img src="{{ empresa.logo_base64 }}" alt="Logo">
+        {% endif %}
+        
+        <h1>{{ empresa.nome_empresa }}</h1>
+        <p>Proposta de Orçamento Especializado</p>
+    </div>
+
+    <div class="cliente-box">
+        <p style="margin: 0 0 8px 0;"><strong>CLIENTE:</strong> {{ cliente.nome }}</p>
+        <p style="margin: 0 0 8px 0;"><strong>ENDEREÇO:</strong> {{ cliente.endereco }}, {{ cliente.numero }} - {{ cliente.bairro }}</p>
+        <p style="margin: 0;"><strong>DATA DE EMISSÃO:</strong> {{ data_emissao }}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Descrição do Serviço</th>
+                <th style="text-align: center;">Qtd</th>
+                <th style="text-align: right;">Vlr. Unitário</th>
+                <th style="text-align: right;">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in itens %}
+            <tr>
+                <td>
+                    <strong>{{ item.nome }}</strong><br>
+                    <small style="color: #666;">Categoria: {{ item.categoria }}</small>
+                </td>
+                <td style="text-align: center;">{{ item.qtd }}</td>
+                <td style="text-align: right;">R$ {{ "%.2f"|format(item.unit) }}</td>
+                <td style="text-align: right;">R$ {{ "%.2f"|format(item.sub) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total">
+        <small style="font-size: 12px; color: #666; font-weight: normal;">VALOR TOTAL DA PROPOSTA:</small><br>
+        R$ {{ "%.2f"|format(total) }}
+    </div>
+
+    <div class="footer">
+        <p>Este orçamento tem validade de <span class="validade-tag">{{ validade }} dias</span> a partir da data de emissão.</p>
+        <p>Emitido por: <strong>{{ empresa.nome_empresa }}</strong> | Contato: {{ empresa_email }}</p>
+        <p style="margin-top: 10px; font-style: italic;">Agradecemos a oportunidade de apresentar nossa proposta comercial!</p>
+    </div>
+</body>
+</html>
