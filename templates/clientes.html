@@ -17,6 +17,10 @@
                             <label for="nome" class="form-label">Nome Completo</label>
                             <input type="text" class="form-control" id="nome" name="nome" required>
                         </div>
+                        <div class="col-12">
+                            <label for="documento" class="form-label">CPF ou CNPJ (Opcional)</label>
+                            <input type="text" class="form-control" id="documento" name="documento" placeholder="000.000.000-00">
+                        </div>
                         <div class="col-md-6">
                             <label for="telefone" class="form-label">Telefone</label>
                             <input type="text" class="form-control" id="telefone" name="telefone">
@@ -67,7 +71,7 @@
                         <thead>
                             <tr>
                                 <th>Nome</th>
-                                <th>Telefone</th>
+                                <th>Documento</th> <th>Telefone</th>
                                 <th>Cidade</th>
                                 <th class="text-end">Ações</th>
                             </tr>
@@ -81,6 +85,7 @@
                                         {{ cliente.nome }}
                                     </a>
                                 </td>
+                                <td><small class="text-muted">{{ cliente.documento | default('N/A', true) }}</small></td>
                                 <td>{{ cliente.telefone | default('N/A', true) }}</td>
                                 <td>{{ cliente.cidade | default('N/A', true) }}</td>
                                 
@@ -99,7 +104,7 @@
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="4" class="text-center text-body-secondary">Nenhum cliente cadastrado.</td>
+                                <td colspan="5" class="text-center text-body-secondary">Nenhum cliente cadastrado.</td>
                             </tr>
                             {% endfor %}
                         </tbody>

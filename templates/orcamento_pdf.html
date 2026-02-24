@@ -3,51 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        body { font-family: sans-serif; padding: 20px; color: #333; }
-        .header { border-bottom: 2px solid #0d6efd; padding-bottom: 10px; margin-bottom: 20px; position: relative; }
-        .logo { max-height: 70px; }
-        .orcamento-id { position: absolute; top: 0; right: 0; text-align: right; color: #666; font-size: 12px; }
-        .cliente-box { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #ddd; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #0d6efd; color: white; padding: 10px; text-align: left; font-size: 13px; }
-        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
-        .total { text-align: right; margin-top: 30px; font-size: 20px; font-weight: bold; color: #198754; }
-        .info-adicional { margin-top: 40px; font-size: 12px; line-height: 1.6; }
-        .footer { margin-top: 50px; font-size: 10px; color: #999; text-align: center; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; padding: 20px; color: #333; line-height: 1.5; }
+        .header { border-bottom: 2px solid #0d6efd; padding-bottom: 15px; margin-bottom: 20px; }
+        .row { width: 100%; clear: both; }
+        .col-6 { width: 48%; float: left; margin-right: 2%; }
+        .clearfix { clear: both; }
+        .box { background: #f9f9f9; padding: 12px; border: 1px solid #eee; border-radius: 6px; min-height: 110px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #0d6efd; color: white; padding: 12px; text-align: left; font-size: 14px; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 13px; }
+        .total-section { text-align: right; margin-top: 20px; }
+        .total-box { display: inline-block; background: #0d6efd; color: white; padding: 10px 20px; border-radius: 4px; }
+        .footer { margin-top: 40px; font-size: 10px; text-align: center; color: #888; border-top: 1px solid #ddd; padding-top: 10px; }
+        .obs-title { font-weight: bold; color: #0d6efd; margin-top: 20px; border-bottom: 1px solid #eee; }
+        .obs-content { font-size: 13px; white-space: pre-wrap; margin-top: 5px; color: #555; }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="orcamento-id">
-            <strong>ORÇAMENTO Nº:</strong> {{ orcamento_id }}<br>
-            <strong>DATA:</strong> {{ data_emissao }}
+        <div style="float: left;">
+            {% if empresa.logo_base64 %}
+                <img src="{{ empresa.logo_base64 }}" style="max-height: 80px;">
+            {% endif %}
+            <h2 style="margin: 10px 0 0 0;">{{ empresa.nome_empresa }}</h2>
         </div>
-        {% if empresa.logo_base64 %}
-            <img src="{{ empresa.logo_base64 }}" class="logo">
-        {% endif %}
-        <h2 style="margin: 5px 0; color: #0d6efd;">{{ empresa.nome_empresa }}</h2>
+        <div style="float: right; text-align: right;">
+            <h1 style="color: #0d6efd; margin: 0;">ORÇAMENTO</h1>
+            <p style="margin: 0;">Nº {{ orcamento_id }}</p>
+            <p style="margin: 0;">Data: {{ data_emissao }}</p>
+        </div>
+        <div class="clearfix"></div>
     </div>
 
-    <div class="cliente-box">
-        <strong>CLIENTE:</strong> {{ cliente.nome }}<br>
-        <strong>TELEFONE:</strong> {{ cliente.telefone | default('Não informado') }}<br>
-        <strong>ENDEREÇO:</strong> {{ cliente.endereco }}, {{ cliente.numero }} - {{ cliente.bairro }}
+    <div class="row">
+        <div class="col-6">
+            <div class="box">
+                <strong style="color: #0d6efd;">EMISSOR:</strong><br>
+                <strong>{{ empresa.nome_empresa }}</strong><br>
+                CNPJ/CPF: {{ empresa.documento | default('Não informado', true) }}<br>
+                Tel/WhatsApp: {{ empresa.whatsapp | default('Não informado', true) }}<br>
+                Endereço: {{ empresa.endereco | default('Não informado', true) }}
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="box">
+                <strong style="color: #0d6efd;">CLIENTE:</strong><br>
+                <strong>{{ cliente.nome }}</strong><br>
+                CPF/CNPJ: {{ cliente.documento | default('Não informado', true) }}<br>
+                Telefone: {{ cliente.telefone | default('Não informado', true) }}<br>
+                Endereço: {{ cliente.endereco | default('', true) }}, {{ cliente.numero | default('', true) }}
+            </div>
+        </div>
+        <div class="clearfix"></div>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th>SERVIÇO</th>
-                <th>QTD</th>
-                <th style="text-align: right;">UNITÁRIO</th>
-                <th style="text-align: right;">SUBTOTAL</th>
+                <th>Descrição do Serviço / Produto</th>
+                <th style="text-align: center;">Qtd</th>
+                <th style="text-align: right;">Unitário</th>
+                <th style="text-align: right;">Subtotal</th>
             </tr>
         </thead>
         <tbody>
             {% for item in itens %}
             <tr>
-                <td>{{ item.nome }} <br><small style="color: #777;">{{ item.categoria }}</small></td>
-                <td>{{ item.qtd }}</td>
+                <td>{{ item.nome }} <br><small style="color: #777;">Cat: {{ item.categoria }}</small></td>
+                <td style="text-align: center;">{{ item.qtd }}</td>
                 <td style="text-align: right;">R$ {{ "%.2f"|format(item.unit) }}</td>
                 <td style="text-align: right;">R$ {{ "%.2f"|format(item.sub) }}</td>
             </tr>
@@ -55,16 +78,28 @@
         </tbody>
     </table>
 
-    <div class="total">TOTAL: R$ {{ "%.2f"|format(total) }}</div>
-
-    <div class="info-adicional">
-        <strong>FORMA DE PAGAMENTO:</strong> {{ forma_pagamento }}<br>
-        <strong>VALIDADE DA PROPOSTA:</strong> {{ validade }} dias<br>
-        <p style="margin-top: 10px;">* Este documento é uma estimativa de valores. O serviço será iniciado após aprovação formal do cliente.</p>
+    <div class="total-section">
+        <div class="total-box">
+            <span style="font-size: 14px;">VALOR TOTAL:</span>
+            <strong style="font-size: 20px; margin-left: 10px;">R$ {{ "%.2f"|format(total) }}</strong>
+        </div>
     </div>
 
+    <div style="margin-top: 20px;">
+        <p style="margin-bottom: 5px;"><strong>Forma de Pagamento:</strong> {{ forma_pagamento | default('A combinar', true) }}</p>
+        <p style="margin-top: 0;"><strong>Validade do Orçamento:</strong> {{ validade }} dias</p>
+    </div>
+
+    {% if observacoes %}
+    <div class="obs-title">OBSERVAÇÕES E GARANTIA:</div>
+    <div class="obs-content">
+        {{ observacoes }}
+    </div>
+    {% endif %}
+
     <div class="footer">
-        Gerado por {{ empresa.nome_empresa }} - Sistema de Gestão de Limpeza
+        {{ empresa.nome_empresa }} | Instagram: {{ empresa.instagram | default('Não informado', true) }}<br>
+        Documento gerado eletronicamente.
     </div>
 </body>
 </html>

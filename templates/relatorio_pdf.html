@@ -2,92 +2,109 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Relatório de Serviços - {{ empresa.nome_empresa }}</title>
+    <title>Relatório de Faturamento - {{ empresa.nome_empresa }}</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; font-size: 12px; color: #333; }
-        .container { width: 95%; margin: 20px auto; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; padding: 30px; color: #333; line-height: 1.5; }
         
-        /* Cabeçalho Ajustado para Logo e Nome */
-        .header { text-align: center; border-bottom: 2px solid #00bcd4; padding-bottom: 10px; }
-        .header img { max-height: 80px; margin-bottom: 10px; }
-        .header h1 { color: #00bcd4; margin: 0; text-transform: uppercase; font-size: 22px; }
-        .header p { font-size: 14px; margin: 5px 0; color: #666; }
+        /* Cabeçalho igual ao Orçamento */
+        .header { border-bottom: 2px solid #0d6efd; padding-bottom: 15px; margin-bottom: 20px; }
+        .row { width: 100%; clear: both; }
+        .col { width: 48%; float: left; margin-right: 2%; }
+        .clearfix { clear: both; }
         
-        .filtro-info { background-color: #f4f4f4; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #00bcd4; }
+        /* Estilo dos Blocos Cinzas */
+        .box { background: #f8f9fa; padding: 12px; border: 1px solid #eee; border-radius: 6px; min-height: 90px; margin-bottom: 20px; font-size: 12px; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background-color: #f2f2f2; color: #000; font-weight: bold; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
+        h1 { color: #0d6efd; margin: 0; font-size: 24px; }
+        h2 { margin: 10px 0 0 0; font-size: 18px; }
+
+        /* Tabela Estilizada */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #0d6efd; color: white; padding: 10px; text-align: left; font-size: 12px; text-transform: uppercase; }
+        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 11px; }
+        tr:nth-child(even) { background-color: #fcfcfc; }
+
+        /* Seção de Total */
+        .total-section { text-align: right; margin-top: 25px; }
+        .total-box { display: inline-block; background: #198754; color: white; padding: 12px 25px; border-radius: 4px; }
         
-        .total { margin-top: 20px; text-align: right; font-size: 1.5em; font-weight: bold; }
-        .total-valor { color: #28a745; }
-        
-        .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #888; border-top: 1px solid #ddd; padding-top: 10px; }
+        .footer { margin-top: 50px; font-size: 10px; text-align: center; color: #888; border-top: 1px solid #eee; padding-top: 10px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        
-        <div class="header">
+    <div class="header">
+        <div class="col">
             {% if empresa.logo_base64 %}
-                <img src="{{ empresa.logo_base64 }}" alt="Logo Empresa">
+                <img src="{{ empresa.logo_base64 }}" style="max-height: 70px;">
             {% endif %}
-            
-            <h1>{{ empresa.nome_empresa }}</h1>
-            <p>Relatório de Serviços Prestados</p>
+            <h2>{{ empresa.nome_empresa }}</h2>
         </div>
-
-        <div class="filtro-info">
-            <p><strong>Período:</strong> 
-                {{ data_inicio.split('-') | reverse | join('/') }} até 
-                {{ data_fim.split('-') | reverse | join('/') }}
-            </p>
-            <p><strong>Filtro Cliente:</strong> {{ cliente_filtro }}</p>
+        <div class="col" style="text-align: right;">
+            <h1>RELATÓRIO</h1>
+            <p style="margin: 0; font-weight: bold; color: #666;">Faturamento por Período</p>
+            <p style="margin: 0;">Emissão: {{ data_emissao }}</p>
         </div>
+        <div class="clearfix"></div>
+    </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Data</th>
-                    <th>Cliente</th>
-                    <th>Serviço</th>
-                    <th>Categoria</th> 
-                    <th style="text-align: right;">Valor Pago</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for servico in servicos %}
-                <tr>
-                    <td>{{ servico.data.split('T')[0].split('-') | reverse | join('/') }}</td>
-                    <td>{{ servico.cliente_nome }}</td>
-                    <td>{{ servico.servico_nome }}</td>
-                    <td>{{ servico.servico_categoria | default('N/A') }}</td> 
-                    <td style="text-align: right;">R$ {{ "%.2f"|format(servico.valor_pago) }}</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5" style="text-align: center;">Nenhum serviço encontrado para os filtros aplicados.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr style="background: #f2f2f2; font-weight: bold;">
-                    <td colspan="4" style="text-align: right;">Faturamento Total no Período</td>
-                    <td style="text-align: right;">R$ {{ "%.2f"|format(total) }}</td>
-                </tr>
-            </tfoot>
-        </table>
-
-        <div class="total">
-            Valor Total: <span class="total-valor">R$ {{ "%.2f"|format(total) }}</span>
+    <div class="row">
+        <div class="col">
+            <div class="box">
+                <strong style="color: #0d6efd; text-transform: uppercase;">Emissor:</strong><br>
+                <strong>{{ empresa.nome_empresa }}</strong><br>
+                CNPJ/CPF: {{ empresa.documento | default('Não informado', true) }}<br>
+                Endereço: {{ empresa.endereco | default('Não informado', true) }}<br>
+                Tel: {{ empresa.whatsapp | default('Não informado', true) }}
+            </div>
         </div>
-
-        <div class="footer">
-            <p>Relatório emitido por: {{ empresa.nome_empresa }}</p>
-            <p>Data de emissão: {{ data_emissao }}</p>
+        <div class="col">
+            <div class="box">
+                <strong style="color: #0d6efd; text-transform: uppercase;">Parâmetros do Relatório:</strong><br>
+                <strong>Período:</strong> {{ data_inicio.split('-') | reverse | join('/') }} até {{ data_fim.split('-') | reverse | join('/') }}<br>
+                <strong>Filtro Cliente:</strong> {{ cliente_filtro | default('Todos', true) }}<br>
+                <strong>Status:</strong> Serviços Finalizados
+            </div>
         </div>
+        <div class="clearfix"></div>
+    </div>
 
+    <table>
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Cliente</th>
+                <th>Serviço Realizado</th>
+                <th>Categoria</th>
+                <th style="text-align: right;">Valor Recebido</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in servicos %}
+            <tr>
+                <td>{{ s.data.split('-') | reverse | join('/') }}</td>
+                <td><strong>{{ s.cliente_nome }}</strong></td>
+                <td>{{ s.servico_nome }}</td>
+                <td><small>{{ s.servico_categoria | default('Geral') }}</small></td>
+                <td style="text-align: right; font-weight: bold;">R$ {{ "%.2f"|format(s.valor_pago) }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 20px;">Nenhum registro encontrado para este período.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-section">
+        <div class="total-box">
+            <span style="font-size: 13px; text-transform: uppercase;">Faturamento Total:</span>
+            <strong style="font-size: 22px; margin-left: 15px;">R$ {{ "%.2f"|format(total) }}</strong>
+        </div>
+    </div>
+
+    <div class="footer">
+        {{ empresa.nome_empresa }} | Instagram: {{ empresa.instagram | default('Não informado', true) }}<br>
+        Relatório Gerencial de Uso Interno - Gerado eletronicamente.
     </div>
 </body>
 </html>
