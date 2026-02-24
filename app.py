@@ -42,6 +42,7 @@ def get_user_db():
 
 @app.context_processor
 def inject_empresa():
+    """Injeta dados da empresa em todos os templates."""
     if 'user_id' in session:
         try:
             user_ref = get_user_db()
@@ -50,6 +51,7 @@ def inject_empresa():
                 return {'empresa': config.to_dict()}
         except:
             pass
+    # Nome default para incentivar o usuário a clicar e editar
     return {'empresa': {'nome_empresa': 'Sistema de Limpeza', 'logo_base64': None}}
 
 @app.route('/login')
@@ -125,7 +127,7 @@ def relatorios():
                            data_fim=data_fim,
                            cliente_filtro=cliente_id_filtro)
 
-# --- CLIENTES (CRUD COMPLETO) ---
+# --- CLIENTES ---
 
 @app.route('/clientes', methods=['GET', 'POST'])
 @login_required
@@ -138,16 +140,6 @@ def gerenciar_clientes():
         return redirect(url_for('gerenciar_clientes'))
     clientes_docs = user_ref.collection('clientes').order_by('nome').stream()
     return render_template('clientes.html', clientes=clientes_docs)
-
-@app.route('/cliente/<string:cliente_id>')
-@login_required
-def cliente_detalhe(cliente_id):
-    user_ref = get_user_db()
-    cliente_doc = user_ref.collection('clientes').document(cliente_id).get()
-    servicos_docs = user_ref.collection('servicos_registrados').where(filter=FieldFilter('cliente_id', '==', cliente_id)).order_by('data', direction='DESCENDING').stream()
-    servicos_registrados = [doc.to_dict() for doc in servicos_docs]
-    total_gasto = sum(s['valor_pago'] for s in servicos_registrados)
-    return render_template('cliente_detalhe.html', cliente=cliente_doc.to_dict(), servicos=servicos_registrados, total_gasto=total_gasto)
 
 @app.route('/cliente/editar/<string:cliente_id>', methods=['GET', 'POST'])
 @login_required
@@ -169,7 +161,7 @@ def apagar_cliente(cliente_id):
     flash("Cliente apagado.", 'success')
     return redirect(url_for('gerenciar_clientes'))
 
-# --- SERVIÇOS (CRUD COMPLETO) ---
+# --- SERVIÇOS ---
 
 @app.route('/servicos', methods=['GET', 'POST'])
 @login_required
@@ -212,7 +204,62 @@ def apagar_servico(servico_id):
     flash("Serviço apagado.", 'success')
     return redirect(url_for('gerenciar_servicos'))
 
-# --- REGISTRO DE SERVIÇO ---
+# --- ORÇAMENTOS ---
+
+@app.route('/orcamentos', methods=['GET'])
+@login_required
+def gerenciar_orcamentos():
+    user_ref = get_user_db()
+    clientes = user_ref.collection('clientes').order_by('nome').stream()
+    servicos = user_ref.collection('tipos_servicos').order_by('nome').stream()
+    return render_template('orcamentos.html', clientes=clientes, servicos=servicos)
+
+@app.route('/orcamento/gerar_pdf', methods=['POST'])
+@login_required
+def gerar_orcamento_pdf():
+    user_ref = get_user_db()
+    cliente_id = request.form.get('cliente_id')
+    servicos_ids = request.form.getlist('servicos[]')
+    quantidades = request.form.getlist('quantidades[]')
+    validade = request.form.get('validade', '7')
+    forma_pagamento = request.form.get('forma_pagamento', 'A combinar')
+    
+    # Gerar ID numérico único (AnoMêsDiaHoraMinuto)
+    orcamento_id = datetime.now().strftime("%Y%m%d%H%M") 
+
+    cliente_doc = user_ref.collection('clientes').document(cliente_id).get().to_dict()
+    
+    itens = []
+    total = 0
+    for i in range(len(servicos_ids)):
+        s_doc = user_ref.collection('tipos_servicos').document(servicos_ids[i]).get().to_dict()
+        qtd = int(quantidades[i])
+        sub = s_doc['preco_padrao'] * qtd
+        total += sub
+        itens.append({
+            'nome': s_doc['nome'], 
+            'qtd': qtd, 
+            'unit': s_doc['preco_padrao'], 
+            'sub': sub, 
+            'categoria': s_doc['categoria']
+        })
+
+    html = render_template('orcamento_pdf.html', 
+                           cliente=cliente_doc, 
+                           itens=itens, 
+                           total=total, 
+                           validade=validade,
+                           forma_pagamento=forma_pagamento,
+                           orcamento_id=orcamento_id,
+                           data_emissao=datetime.now().strftime("%d/%m/%Y"))
+    
+    pdf = pdfkit.from_string(html, False, options={"enable-local-file-access": ""})
+    response = make_response(pdf)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename=orcamento_{orcamento_id}.pdf'
+    return response
+
+# --- REGISTRO DE SERVIÇO EFETUADO ---
 
 @app.route('/registrar_servico', methods=['GET', 'POST'])
 @login_required
@@ -244,44 +291,7 @@ def registrar_servico():
     servicos = user_ref.collection('tipos_servicos').order_by('nome').stream()
     return render_template('registrar_servico.html', clientes=clientes, tipos_servicos=servicos, data_hoje=date.today().isoformat())
 
-# --- ORÇAMENTOS ---
-
-@app.route('/orcamentos', methods=['GET'])
-@login_required
-def gerenciar_orcamentos():
-    user_ref = get_user_db()
-    clientes = user_ref.collection('clientes').order_by('nome').stream()
-    servicos = user_ref.collection('tipos_servicos').order_by('nome').stream()
-    return render_template('orcamentos.html', clientes=clientes, servicos=servicos)
-
-@app.route('/orcamento/gerar_pdf', methods=['POST'])
-@login_required
-def gerar_orcamento_pdf():
-    user_ref = get_user_db()
-    cliente_id = request.form.get('cliente_id')
-    servicos_ids = request.form.getlist('servicos[]')
-    quantidades = request.form.getlist('quantidades[]')
-    validade = request.form.get('validade', '7')
-    
-    cliente_doc = user_ref.collection('clientes').document(cliente_id).get().to_dict()
-    itens = []
-    total = 0
-    for i in range(len(servicos_ids)):
-        s_doc = user_ref.collection('tipos_servicos').document(servicos_ids[i]).get().to_dict()
-        sub = s_doc['preco_padrao'] * int(quantidades[i])
-        total += sub
-        itens.append({'nome': s_doc['nome'], 'qtd': quantidades[i], 'unit': s_doc['preco_padrao'], 'sub': sub, 'categoria': s_doc['categoria']})
-
-    html = render_template('orcamento_pdf.html', cliente=cliente_doc, itens=itens, total=total, 
-                           validade=validade, data_emissao=datetime.now().strftime("%d/%m/%Y"))
-    
-    pdf = pdfkit.from_string(html, False, options={"enable-local-file-access": ""})
-    response = make_response(pdf)
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'attachment; filename=orcamento_{cliente_doc["nome"]}.pdf'
-    return response
-
-# --- PDF RELATÓRIO ---
+# --- PDF RELATÓRIO DE FATURAMENTO ---
 
 @app.route('/relatorio/pdf')
 @login_required
@@ -317,8 +327,6 @@ def gerar_relatorio_pdf():
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = 'attachment; filename=relatorio.pdf'
     return response
-
-# --- API ---
 
 @app.route('/api/get_servico_preco/<string:servico_id>')
 @login_required

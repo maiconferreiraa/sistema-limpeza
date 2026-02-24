@@ -2,62 +2,52 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Orçamento - {{ empresa.nome_empresa }}</title>
     <style>
-        body { font-family: sans-serif; padding: 30px; color: #333; }
-        
-        /* Cabeçalho com Logo e Nome Dinâmico */
-        .header { text-align: center; border-bottom: 2px solid #0d6efd; padding-bottom: 15px; margin-bottom: 30px; }
-        .header img { max-height: 80px; margin-bottom: 10px; }
-        .header h1 { margin: 0; color: #0d6efd; text-transform: uppercase; font-size: 24px; }
-        .header p { margin: 5px 0; font-size: 14px; color: #666; }
-
-        .cliente-box { background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 30px; border-left: 5px solid #0d6efd; }
-        .cliente-box strong { color: #0d6efd; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { background: #0d6efd; color: white; padding: 12px; text-align: left; text-transform: uppercase; font-size: 13px; }
-        td { padding: 12px; border-bottom: 1px solid #ddd; font-size: 14px; }
-        
-        .total { text-align: right; margin-top: 40px; font-size: 22px; font-weight: bold; color: #198754; border-top: 2px solid #eee; padding-top: 10px; }
-        
-        .footer { margin-top: 60px; font-size: 12px; color: #777; text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
-        .validade-tag { font-weight: bold; color: #d32f2f; }
+        body { font-family: sans-serif; padding: 20px; color: #333; }
+        .header { border-bottom: 2px solid #0d6efd; padding-bottom: 10px; margin-bottom: 20px; position: relative; }
+        .logo { max-height: 70px; }
+        .orcamento-id { position: absolute; top: 0; right: 0; text-align: right; color: #666; font-size: 12px; }
+        .cliente-box { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #ddd; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #0d6efd; color: white; padding: 10px; text-align: left; font-size: 13px; }
+        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
+        .total { text-align: right; margin-top: 30px; font-size: 20px; font-weight: bold; color: #198754; }
+        .info-adicional { margin-top: 40px; font-size: 12px; line-height: 1.6; }
+        .footer { margin-top: 50px; font-size: 10px; color: #999; text-align: center; }
     </style>
 </head>
 <body>
     <div class="header">
+        <div class="orcamento-id">
+            <strong>ORÇAMENTO Nº:</strong> {{ orcamento_id }}<br>
+            <strong>DATA:</strong> {{ data_emissao }}
+        </div>
         {% if empresa.logo_base64 %}
-            <img src="{{ empresa.logo_base64 }}" alt="Logo">
+            <img src="{{ empresa.logo_base64 }}" class="logo">
         {% endif %}
-        
-        <h1>{{ empresa.nome_empresa }}</h1>
-        <p>Proposta de Orçamento Especializado</p>
+        <h2 style="margin: 5px 0; color: #0d6efd;">{{ empresa.nome_empresa }}</h2>
     </div>
 
     <div class="cliente-box">
-        <p style="margin: 0 0 8px 0;"><strong>CLIENTE:</strong> {{ cliente.nome }}</p>
-        <p style="margin: 0 0 8px 0;"><strong>ENDEREÇO:</strong> {{ cliente.endereco }}, {{ cliente.numero }} - {{ cliente.bairro }}</p>
-        <p style="margin: 0;"><strong>DATA DE EMISSÃO:</strong> {{ data_emissao }}</p>
+        <strong>CLIENTE:</strong> {{ cliente.nome }}<br>
+        <strong>TELEFONE:</strong> {{ cliente.telefone | default('Não informado') }}<br>
+        <strong>ENDEREÇO:</strong> {{ cliente.endereco }}, {{ cliente.numero }} - {{ cliente.bairro }}
     </div>
 
     <table>
         <thead>
             <tr>
-                <th>Descrição do Serviço</th>
-                <th style="text-align: center;">Qtd</th>
-                <th style="text-align: right;">Vlr. Unitário</th>
-                <th style="text-align: right;">Subtotal</th>
+                <th>SERVIÇO</th>
+                <th>QTD</th>
+                <th style="text-align: right;">UNITÁRIO</th>
+                <th style="text-align: right;">SUBTOTAL</th>
             </tr>
         </thead>
         <tbody>
             {% for item in itens %}
             <tr>
-                <td>
-                    <strong>{{ item.nome }}</strong><br>
-                    <small style="color: #666;">Categoria: {{ item.categoria }}</small>
-                </td>
-                <td style="text-align: center;">{{ item.qtd }}</td>
+                <td>{{ item.nome }} <br><small style="color: #777;">{{ item.categoria }}</small></td>
+                <td>{{ item.qtd }}</td>
                 <td style="text-align: right;">R$ {{ "%.2f"|format(item.unit) }}</td>
                 <td style="text-align: right;">R$ {{ "%.2f"|format(item.sub) }}</td>
             </tr>
@@ -65,15 +55,16 @@
         </tbody>
     </table>
 
-    <div class="total">
-        <small style="font-size: 12px; color: #666; font-weight: normal;">VALOR TOTAL DA PROPOSTA:</small><br>
-        R$ {{ "%.2f"|format(total) }}
+    <div class="total">TOTAL: R$ {{ "%.2f"|format(total) }}</div>
+
+    <div class="info-adicional">
+        <strong>FORMA DE PAGAMENTO:</strong> {{ forma_pagamento }}<br>
+        <strong>VALIDADE DA PROPOSTA:</strong> {{ validade }} dias<br>
+        <p style="margin-top: 10px;">* Este documento é uma estimativa de valores. O serviço será iniciado após aprovação formal do cliente.</p>
     </div>
 
     <div class="footer">
-        <p>Este orçamento tem validade de <span class="validade-tag">{{ validade }} dias</span> a partir da data de emissão.</p>
-        <p>Emitido por: <strong>{{ empresa.nome_empresa }}</strong> | Contato: {{ empresa_email }}</p>
-        <p style="margin-top: 10px; font-style: italic;">Agradecemos a oportunidade de apresentar nossa proposta comercial!</p>
+        Gerado por {{ empresa.nome_empresa }} - Sistema de Gestão de Limpeza
     </div>
 </body>
 </html>
