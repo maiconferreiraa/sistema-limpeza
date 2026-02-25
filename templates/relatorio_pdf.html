@@ -61,7 +61,7 @@
             <div class="box">
                 <strong style="color: #0d6efd; text-transform: uppercase;">Parâmetros do Relatório:</strong><br>
                 <strong>Período:</strong> {{ data_inicio.split('-') | reverse | join('/') }} até {{ data_fim.split('-') | reverse | join('/') }}<br>
-                <strong>Filtro Cliente:</strong> {{ cliente_filtro | default('Todos', true) }}<br>
+                <strong>Filtro Cliente:</strong> {{ cliente_nome | default('Todos os Clientes', true) }}<br>
                 <strong>Status:</strong> Serviços Finalizados
             </div>
         </div>

@@ -52,6 +52,8 @@
                 CPF/CNPJ: {{ cliente.documento | default('Não informado', true) }}<br>
                 Telefone: {{ cliente.telefone | default('Não informado', true) }}<br>
                 Endereço: {{ cliente.endereco | default('', true) }}, {{ cliente.numero | default('', true) }}
+                {% if cliente.bairro %} - {{ cliente.bairro }}{% endif %}
+                {% if cliente.cidade %} - {{ cliente.cidade }}{% endif %}
             </div>
         </div>
         <div class="clearfix"></div>
@@ -98,8 +100,10 @@
     {% endif %}
 
     <div class="footer">
-        {{ empresa.nome_empresa }} | Instagram: {{ empresa.instagram | default('Não informado', true) }}<br>
-        Documento gerado eletronicamente.
+        <strong>{{ empresa.nome_empresa }}</strong><br>
+        {% if empresa.instagram %} Instagram: {{ empresa.instagram }} | {% endif %}
+        {% if empresa.whatsapp %} WhatsApp: {{ empresa.whatsapp }} {% endif %}<br>
+        Este orçamento é uma proposta comercial. Documento gerado eletronicamente.
     </div>
 </body>
 </html>

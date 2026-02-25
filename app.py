@@ -81,10 +81,10 @@ def salvar_config_empresa():
     user_ref = get_user_db()
     dados_config = {
         'nome_empresa': request.form.get('nome_empresa'),
-        'instagram': request.form.get('instagram'), # Acrescentado
-        'whatsapp': request.form.get('whatsapp'),   # Acrescentado
-        'documento': request.form.get('documento'), # CPF/CNPJ
-        'endereco': request.form.get('endereco')    # Endereço Fixo
+        'instagram': request.form.get('instagram'),
+        'whatsapp': request.form.get('whatsapp'),
+        'documento': request.form.get('documento'),
+        'endereco': request.form.get('endereco')
     }
 
     logo_file = request.files.get('logo_empresa')
@@ -105,11 +105,19 @@ def gerenciar_clientes():
     user_ref = get_user_db()
     if request.method == 'POST':
         data = request.form.to_dict()
+        data['status'] = 'ativo'
         user_ref.collection('clientes').add(data)
         flash(f"Cliente '{data['nome']}' cadastrado!", 'success')
         return redirect(url_for('gerenciar_clientes'))
-    clientes_docs = user_ref.collection('clientes').order_by('nome').stream()
-    return render_template('clientes.html', clientes=clientes_docs)
+    
+    # Busca todos para separar em Ativos e Inativos (Garante que antigos não sumam)
+    clientes_query = user_ref.collection('clientes').order_by('nome').stream()
+    todos = [doc for doc in clientes_query]
+    
+    clientes_ativos = [doc for doc in todos if doc.to_dict().get('status') != 'inativo']
+    clientes_inativos = [doc for doc in todos if doc.to_dict().get('status') == 'inativo']
+    
+    return render_template('clientes.html', clientes=clientes_ativos, inativos=clientes_inativos)
 
 @app.route('/cliente/<string:cliente_id>')
 @login_required
@@ -127,7 +135,6 @@ def editar_cliente(cliente_id):
     user_ref = get_user_db()
     cliente_ref = user_ref.collection('clientes').document(cliente_id)
     if request.method == 'POST':
-        # Corrigido para capturar todos os campos, incluindo o documento
         cliente_ref.update(request.form.to_dict())
         flash("Dados do cliente atualizados!", 'success')
         return redirect(url_for('gerenciar_clientes'))
@@ -138,8 +145,18 @@ def editar_cliente(cliente_id):
 @login_required
 def apagar_cliente(cliente_id):
     user_ref = get_user_db()
-    user_ref.collection('clientes').document(cliente_id).delete()
-    flash("Cliente removido com sucesso.", 'success')
+    # Apenas marca como inativo
+    user_ref.collection('clientes').document(cliente_id).update({'status': 'inativo'})
+    flash("Cliente enviado para o arquivo (inativo).", 'success')
+    return redirect(url_for('gerenciar_clientes'))
+
+@app.route('/cliente/reativar/<string:cliente_id>', methods=['POST'])
+@login_required
+def reativar_cliente(cliente_id):
+    user_ref = get_user_db()
+    # Volta o status para ativo
+    user_ref.collection('clientes').document(cliente_id).update({'status': 'ativo'})
+    flash("Cliente reativado com sucesso!", 'success')
     return redirect(url_for('gerenciar_clientes'))
 
 # --- SERVIÇOS ---
@@ -156,28 +173,6 @@ def gerenciar_servicos():
         return redirect(url_for('gerenciar_servicos'))
     servicos_docs = user_ref.collection('tipos_servicos').order_by('nome').stream()
     return render_template('servicos.html', servicos=servicos_docs)
-
-@app.route('/servico/editar/<string:servico_id>', methods=['GET', 'POST'])
-@login_required
-def editar_servico(servico_id):
-    user_ref = get_user_db()
-    servico_ref = user_ref.collection('tipos_servicos').document(servico_id)
-    if request.method == 'POST':
-        data = request.form.to_dict()
-        data['preco_padrao'] = float(data['preco_padrao'])
-        servico_ref.update(data)
-        flash("Serviço atualizado!", 'success')
-        return redirect(url_for('gerenciar_servicos'))
-    servico = servico_ref.get()
-    return render_template('editar_servico.html', servico=servico.to_dict(), servico_id=servico.id)
-
-@app.route('/servico/apagar/<string:servico_id>', methods=['POST'])
-@login_required
-def apagar_servico(servico_id):
-    user_ref = get_user_db()
-    user_ref.collection('tipos_servicos').document(servico_id).delete()
-    flash("Serviço removido.", 'success')
-    return redirect(url_for('gerenciar_servicos'))
 
 # --- REGISTRO DE VENDAS/SERVIÇOS ---
 
@@ -203,9 +198,11 @@ def registrar_servico():
         flash('Serviço registrado no faturamento!', 'success')
         return redirect(url_for('relatorios'))
 
-    clientes = user_ref.collection('clientes').order_by('nome').stream()
+    clientes_query = user_ref.collection('clientes').order_by('nome').stream()
+    clientes_filtrados = [doc for doc in clientes_query if doc.to_dict().get('status') != 'inativo']
+    
     servicos = user_ref.collection('tipos_servicos').order_by('nome').stream()
-    return render_template('registrar_servico.html', clientes=clientes, tipos_servicos=servicos, data_hoje=date.today().isoformat())
+    return render_template('registrar_servico.html', clientes=clientes_filtrados, tipos_servicos=servicos, data_hoje=date.today().isoformat())
 
 # --- ORÇAMENTOS (PDF) ---
 
@@ -213,9 +210,11 @@ def registrar_servico():
 @login_required
 def gerenciar_orcamentos():
     user_ref = get_user_db()
-    clientes = user_ref.collection('clientes').order_by('nome').stream()
+    clientes_query = user_ref.collection('clientes').order_by('nome').stream()
+    clientes_filtrados = [doc for doc in clientes_query if doc.to_dict().get('status') != 'inativo']
+    
     servicos = user_ref.collection('tipos_servicos').order_by('nome').stream()
-    return render_template('orcamentos.html', clientes=clientes, servicos=servicos)
+    return render_template('orcamentos.html', clientes=clientes_filtrados, servicos=servicos)
 
 @app.route('/orcamento/gerar_pdf', methods=['POST'])
 @login_required
@@ -235,7 +234,13 @@ def gerar_orcamento_pdf():
         s_doc = user_ref.collection('tipos_servicos').document(servicos_ids[i]).get().to_dict()
         sub = s_doc['preco_padrao'] * int(quantidades[i])
         total += sub
-        itens.append({'nome': s_doc['nome'], 'qtd': quantidades[i], 'unit': s_doc['preco_padrao'], 'sub': sub, 'categoria': s_doc.get('categoria', 'Geral')})
+        itens.append({
+            'nome': s_doc['nome'], 
+            'qtd': quantidades[i], 
+            'unit': s_doc['preco_padrao'], 
+            'sub': sub,
+            'categoria': s_doc.get('categoria', 'Geral')
+        })
 
     html = render_template('orcamento_pdf.html', 
                            cliente=cliente_doc, 
@@ -243,7 +248,7 @@ def gerar_orcamento_pdf():
                            total=total, 
                            validade=request.form.get('validade', '7'), 
                            forma_pagamento=request.form.get('forma_pagamento', 'A combinar'), 
-                           observacoes=request.form.get('observacoes', ''), # Acrescentado
+                           observacoes=request.form.get('observacoes', ''), 
                            orcamento_id=orcamento_id, 
                            empresa=empresa_doc, 
                            data_emissao=datetime.now().strftime("%d/%m/%Y"))
@@ -260,15 +265,29 @@ def gerar_orcamento_pdf():
 @login_required
 def relatorios():
     user_ref = get_user_db()
-    data_inicio = request.form.get('data_inicio', date.today().replace(day=1).isoformat())
-    data_fim = request.form.get('data_fim', date.today().isoformat())
     
-    query = user_ref.collection('servicos_registrados').where(filter=FieldFilter('data', '>=', data_inicio)).where(filter=FieldFilter('data', '<=', data_fim))
+    data_inicio = request.form.get('data_inicio') or request.args.get('data_inicio') or date.today().replace(day=1).isoformat()
+    data_fim = request.form.get('data_fim') or request.args.get('data_fim') or date.today().isoformat()
+    cliente_filtro = request.form.get('cliente_id_filtro') or request.args.get('cliente_id_filtro') or 'todos'
+    
+    query = user_ref.collection('servicos_registrados')\
+        .where(filter=FieldFilter('data', '>=', data_inicio))\
+        .where(filter=FieldFilter('data', '<=', data_fim))
+    
+    if cliente_filtro and cliente_filtro != 'todos':
+        query = query.where(filter=FieldFilter('cliente_id', '==', cliente_filtro))
+    
     servicos = [doc.to_dict() for doc in query.order_by('data', direction='DESCENDING').stream()]
     total = sum(s['valor_pago'] for s in servicos)
     clientes = user_ref.collection('clientes').order_by('nome').stream()
     
-    return render_template('relatorios.html', servicos=servicos, total=total, clientes=clientes, data_inicio=data_inicio, data_fim=data_fim)
+    return render_template('relatorios.html', 
+                           servicos=servicos, 
+                           total=total, 
+                           clientes=clientes, 
+                           data_inicio=data_inicio, 
+                           data_fim=data_fim, 
+                           cliente_filtro=cliente_filtro)
 
 @app.route('/relatorio/pdf')
 @login_required
@@ -276,14 +295,33 @@ def gerar_relatorio_pdf():
     user_ref = get_user_db()
     data_inicio = request.args.get('data_inicio')
     data_fim = request.args.get('data_fim')
+    cliente_id = request.args.get('cliente_id')
+    
     empresa_doc = user_ref.collection('configuracoes').document('perfil').get().to_dict() or {}
+    
+    nome_filtro_pdf = "Todos os Clientes"
 
-    query = user_ref.collection('servicos_registrados').where(filter=FieldFilter('data', '>=', data_inicio)).where(filter=FieldFilter('data', '<=', data_fim))
+    query = user_ref.collection('servicos_registrados')\
+        .where(filter=FieldFilter('data', '>=', data_inicio))\
+        .where(filter=FieldFilter('data', '<=', data_fim))
+
+    if cliente_id and cliente_id != 'todos':
+        query = query.where(filter=FieldFilter('cliente_id', '==', cliente_id))
+        cliente_snap = user_ref.collection('clientes').document(cliente_id).get()
+        if cliente_snap.exists:
+            nome_filtro_pdf = cliente_snap.to_dict().get('nome')
+
     servicos = [doc.to_dict() for doc in query.order_by('data', direction='DESCENDING').stream()]
     total = sum(s['valor_pago'] for s in servicos)
 
-    html = render_template('relatorio_pdf.html', servicos=servicos, total=total, data_inicio=data_inicio, 
-                           data_fim=data_fim, empresa=empresa_doc, data_emissao=datetime.now().strftime("%d/%m/%Y %H:%M"))
+    html = render_template('relatorio_pdf.html', 
+                           servicos=servicos, 
+                           total=total, 
+                           data_inicio=data_inicio, 
+                           data_fim=data_fim, 
+                           empresa=empresa_doc, 
+                           cliente_nome=nome_filtro_pdf,
+                           data_emissao=datetime.now().strftime("%d/%m/%Y %H:%M"))
     
     pdf = pdfkit.from_string(html, False, options={"enable-local-file-access": ""})
     response = make_response(pdf)

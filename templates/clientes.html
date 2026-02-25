@@ -71,7 +71,8 @@
                         <thead>
                             <tr>
                                 <th>Nome</th>
-                                <th>Documento</th> <th>Telefone</th>
+                                <th>Documento</th> 
+                                <th>Telefone</th>
                                 <th>Cidade</th>
                                 <th class="text-end">Ações</th>
                             </tr>
@@ -95,8 +96,8 @@
                                     </a>
                                     
                                     <form action="{{ url_for('apagar_cliente', cliente_id=doc.id) }}" method="POST" style="display: inline-block; margin-left: 5px;">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Apagar"
-                                                onclick="return confirm('Tem certeza que deseja apagar o cliente \'{{ cliente.nome }}\'? Esta ação não pode ser desfeita.')">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Desativar"
+                                                onclick="return confirm('Deseja desativar o cliente \'{{ cliente.nome }}\'? Ele não aparecerá mais nas listas, mas o histórico de serviços será preservado.')">
                                             <i class="bi bi-trash-fill"></i>
                                         </button>
                                     </form>
@@ -104,7 +105,52 @@
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="5" class="text-center text-body-secondary">Nenhum cliente cadastrado.</td>
+                                <td colspan="5" class="text-center text-body-secondary">Nenhum cliente ativo encontrado.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card shadow-sm border-secondary" style="opacity: 0.85;">
+            <div class="card-header bg-dark">
+                <h2 class="h5 mb-0 text-secondary"><i class="bi bi-archive"></i> Clientes Inativos (Arquivo)</h2>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-dark table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th class="ps-3">Nome</th>
+                                <th>Documento</th>
+                                <th>Cidade</th>
+                                <th class="text-end pe-3">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in inativos %}
+                            {% set cli = doc.to_dict() %}
+                            <tr>
+                                <td class="ps-3 text-secondary">{{ cli.nome }}</td>
+                                <td class="text-secondary"><small>{{ cli.documento | default('N/A', true) }}</small></td>
+                                <td class="text-secondary">{{ cli.cidade | default('N/A', true) }}</td>
+                                <td class="text-end pe-3">
+                                    <form action="{{ url_for('reativar_cliente', cliente_id=doc.id) }}" method="POST" style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-outline-success py-0 px-2" title="Reativar Cliente">
+                                            <i class="bi bi-arrow-counterclockwise"></i> Reativar
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-3 text-muted">Nenhum cliente arquivado.</td>
                             </tr>
                             {% endfor %}
                         </tbody>

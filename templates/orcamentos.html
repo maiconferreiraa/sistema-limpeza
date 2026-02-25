@@ -32,9 +32,15 @@
 
                 <hr class="border-secondary">
 
-                <h5 class="mb-3 text-info"><i class="bi bi-cart-plus"></i> Serviços</h5>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 text-info"><i class="bi bi-cart-plus"></i> Serviços</h5>
+                    <button type="button" class="btn btn-sm btn-outline-info" onclick="adicionarServico()">
+                        <i class="bi bi-plus-lg"></i> Adicionar outro serviço
+                    </button>
+                </div>
+
                 <div id="lista-servicos" class="mb-3">
-                    <div class="row g-2 mb-2">
+                    <div class="row g-2 mb-2 serviço-item">
                         <div class="col-md-8">
                             <select name="servicos[]" class="form-select bg-dark text-white border-secondary" required>
                                 <option value="">Selecione o serviço...</option>
@@ -47,6 +53,9 @@
                             <div class="input-group">
                                 <span class="input-group-text bg-secondary text-white border-secondary">Qtd</span>
                                 <input type="number" name="quantidades[]" class="form-control bg-dark text-white border-secondary" value="1" min="1">
+                                <button type="button" class="btn btn-outline-danger d-none btn-remover" onclick="removerServico(this)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -69,4 +78,26 @@
         </div>
     </div>
 </div>
+
+<script>
+function adicionarServico() {
+    const container = document.getElementById('lista-servicos');
+    const novaLinha = container.querySelector('.serviço-item').cloneNode(true);
+    
+    // Limpa os valores da nova linha
+    novaLinha.querySelector('select').value = "";
+    novaLinha.querySelector('input').value = "1";
+    
+    // Mostra o botão remover na nova linha
+    const btnRemover = novaLinha.querySelector('.btn-remover');
+    btnRemover.classList.remove('d-none');
+    
+    container.appendChild(novaLinha);
+}
+
+function removerServico(btn) {
+    const linha = btn.closest('.serviço-item');
+    linha.remove();
+}
+</script>
 {% endblock %}
