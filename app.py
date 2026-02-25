@@ -73,7 +73,7 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# --- CONFIGURAÇÃO DO EMISSOR (DADOS DEFAULT) ---
+# --- CONFIGURAÇÃO DO EMISSOR ---
 
 @app.route('/config/empresa', methods=['POST'])
 @login_required
@@ -94,7 +94,7 @@ def salvar_config_empresa():
         dados_config['logo_base64'] = f"data:image/png;base64,{logo_base64}"
 
     user_ref.collection('configuracoes').document('perfil').set(dados_config, merge=True)
-    flash("Dados do Emissor atualizados e salvos como padrão!", "success")
+    flash("Dados do Emissor atualizados!", "success")
     return redirect(request.referrer)
 
 # --- CLIENTES ---
@@ -110,7 +110,6 @@ def gerenciar_clientes():
         flash(f"Cliente '{data['nome']}' cadastrado!", 'success')
         return redirect(url_for('gerenciar_clientes'))
     
-    # Busca todos para separar em Ativos e Inativos (Garante que antigos não sumam)
     clientes_query = user_ref.collection('clientes').order_by('nome').stream()
     todos = [doc for doc in clientes_query]
     
@@ -145,7 +144,6 @@ def editar_cliente(cliente_id):
 @login_required
 def apagar_cliente(cliente_id):
     user_ref = get_user_db()
-    # Apenas marca como inativo
     user_ref.collection('clientes').document(cliente_id).update({'status': 'inativo'})
     flash("Cliente enviado para o arquivo (inativo).", 'success')
     return redirect(url_for('gerenciar_clientes'))
@@ -154,12 +152,11 @@ def apagar_cliente(cliente_id):
 @login_required
 def reativar_cliente(cliente_id):
     user_ref = get_user_db()
-    # Volta o status para ativo
     user_ref.collection('clientes').document(cliente_id).update({'status': 'ativo'})
     flash("Cliente reativado com sucesso!", 'success')
     return redirect(url_for('gerenciar_clientes'))
 
-# --- SERVIÇOS ---
+# --- SERVIÇOS (CATÁLOGO) ---
 
 @app.route('/servicos', methods=['GET', 'POST'])
 @login_required
@@ -173,6 +170,28 @@ def gerenciar_servicos():
         return redirect(url_for('gerenciar_servicos'))
     servicos_docs = user_ref.collection('tipos_servicos').order_by('nome').stream()
     return render_template('servicos.html', servicos=servicos_docs)
+
+@app.route('/servico/editar/<string:servico_id>', methods=['GET', 'POST'])
+@login_required
+def editar_servico(servico_id):
+    user_ref = get_user_db()
+    servico_ref = user_ref.collection('tipos_servicos').document(servico_id)
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        data['preco_padrao'] = float(data['preco_padrao'])
+        servico_ref.update(data)
+        flash("Serviço atualizado!", 'success')
+        return redirect(url_for('gerenciar_servicos'))
+    servico = servico_ref.get()
+    return render_template('editar_servico.html', servico=servico.to_dict(), servico_id=servico.id)
+
+@app.route('/servico/apagar/<string:servico_id>', methods=['POST'])
+@login_required
+def apagar_servico(servico_id):
+    user_ref = get_user_db()
+    user_ref.collection('tipos_servicos').document(servico_id).delete()
+    flash("Serviço removido.", 'success')
+    return redirect(url_for('gerenciar_servicos'))
 
 # --- REGISTRO DE VENDAS/SERVIÇOS ---
 
@@ -200,11 +219,10 @@ def registrar_servico():
 
     clientes_query = user_ref.collection('clientes').order_by('nome').stream()
     clientes_filtrados = [doc for doc in clientes_query if doc.to_dict().get('status') != 'inativo']
-    
     servicos = user_ref.collection('tipos_servicos').order_by('nome').stream()
     return render_template('registrar_servico.html', clientes=clientes_filtrados, tipos_servicos=servicos, data_hoje=date.today().isoformat())
 
-# --- ORÇAMENTOS (PDF) ---
+# --- ORÇAMENTOS ---
 
 @app.route('/orcamentos', methods=['GET'])
 @login_required
@@ -212,7 +230,6 @@ def gerenciar_orcamentos():
     user_ref = get_user_db()
     clientes_query = user_ref.collection('clientes').order_by('nome').stream()
     clientes_filtrados = [doc for doc in clientes_query if doc.to_dict().get('status') != 'inativo']
-    
     servicos = user_ref.collection('tipos_servicos').order_by('nome').stream()
     return render_template('orcamentos.html', clientes=clientes_filtrados, servicos=servicos)
 
@@ -265,15 +282,11 @@ def gerar_orcamento_pdf():
 @login_required
 def relatorios():
     user_ref = get_user_db()
-    
     data_inicio = request.form.get('data_inicio') or request.args.get('data_inicio') or date.today().replace(day=1).isoformat()
     data_fim = request.form.get('data_fim') or request.args.get('data_fim') or date.today().isoformat()
     cliente_filtro = request.form.get('cliente_id_filtro') or request.args.get('cliente_id_filtro') or 'todos'
     
-    query = user_ref.collection('servicos_registrados')\
-        .where(filter=FieldFilter('data', '>=', data_inicio))\
-        .where(filter=FieldFilter('data', '<=', data_fim))
-    
+    query = user_ref.collection('servicos_registrados').where(filter=FieldFilter('data', '>=', data_inicio)).where(filter=FieldFilter('data', '<=', data_fim))
     if cliente_filtro and cliente_filtro != 'todos':
         query = query.where(filter=FieldFilter('cliente_id', '==', cliente_filtro))
     
@@ -296,15 +309,10 @@ def gerar_relatorio_pdf():
     data_inicio = request.args.get('data_inicio')
     data_fim = request.args.get('data_fim')
     cliente_id = request.args.get('cliente_id')
-    
     empresa_doc = user_ref.collection('configuracoes').document('perfil').get().to_dict() or {}
-    
     nome_filtro_pdf = "Todos os Clientes"
 
-    query = user_ref.collection('servicos_registrados')\
-        .where(filter=FieldFilter('data', '>=', data_inicio))\
-        .where(filter=FieldFilter('data', '<=', data_fim))
-
+    query = user_ref.collection('servicos_registrados').where(filter=FieldFilter('data', '>=', data_inicio)).where(filter=FieldFilter('data', '<=', data_fim))
     if cliente_id and cliente_id != 'todos':
         query = query.where(filter=FieldFilter('cliente_id', '==', cliente_id))
         cliente_snap = user_ref.collection('clientes').document(cliente_id).get()
