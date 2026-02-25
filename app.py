@@ -81,8 +81,8 @@ def salvar_config_empresa():
     user_ref = get_user_db()
     dados_config = {
         'nome_empresa': request.form.get('nome_empresa'),
-        'instagram': request.form.get('instagram'),
-        'whatsapp': request.form.get('whatsapp'),
+        'instagram': request.form.get('instagram'), # Acrescentado
+        'whatsapp': request.form.get('whatsapp'),   # Acrescentado
         'documento': request.form.get('documento'), # CPF/CNPJ
         'endereco': request.form.get('endereco')    # Endereço Fixo
     }
@@ -127,6 +127,7 @@ def editar_cliente(cliente_id):
     user_ref = get_user_db()
     cliente_ref = user_ref.collection('clientes').document(cliente_id)
     if request.method == 'POST':
+        # Corrigido para capturar todos os campos, incluindo o documento
         cliente_ref.update(request.form.to_dict())
         flash("Dados do cliente atualizados!", 'success')
         return redirect(url_for('gerenciar_clientes'))
@@ -234,7 +235,7 @@ def gerar_orcamento_pdf():
         s_doc = user_ref.collection('tipos_servicos').document(servicos_ids[i]).get().to_dict()
         sub = s_doc['preco_padrao'] * int(quantidades[i])
         total += sub
-        itens.append({'nome': s_doc['nome'], 'qtd': quantidades[i], 'unit': s_doc['preco_padrao'], 'sub': sub})
+        itens.append({'nome': s_doc['nome'], 'qtd': quantidades[i], 'unit': s_doc['preco_padrao'], 'sub': sub, 'categoria': s_doc.get('categoria', 'Geral')})
 
     html = render_template('orcamento_pdf.html', 
                            cliente=cliente_doc, 
@@ -242,7 +243,7 @@ def gerar_orcamento_pdf():
                            total=total, 
                            validade=request.form.get('validade', '7'), 
                            forma_pagamento=request.form.get('forma_pagamento', 'A combinar'), 
-                           observacoes=request.form.get('observacoes', ''), 
+                           observacoes=request.form.get('observacoes', ''), # Acrescentado
                            orcamento_id=orcamento_id, 
                            empresa=empresa_doc, 
                            data_emissao=datetime.now().strftime("%d/%m/%Y"))
