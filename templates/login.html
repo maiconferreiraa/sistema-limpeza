@@ -17,7 +17,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         .form-signin { 
-            max-width: 450px; /* AUMENTADO: Deixou a tela mais larga */
+            max-width: 450px; 
             width: 100%; 
             padding: 15px; 
         }
@@ -28,6 +28,18 @@
         .card {
             border: 1px solid #495057;
             background-color: #2b3035;
+        }
+        /* ESTILO DO BOTÃO WHATSAPP */
+        .btn-whatsapp {
+            background-color: #25d366;
+            color: white;
+            border: none;
+            transition: 0.3s;
+        }
+        .btn-whatsapp:hover {
+            background-color: #128c7e;
+            color: white;
+            transform: scale(1.02);
         }
     </style>
 </head>
@@ -43,7 +55,8 @@
     </div>
 
     <div class="card shadow-lg">
-        <div class="card-body p-5"> <h2 class="h4 mb-4 fw-normal text-white">Faça seu Login</h2>
+        <div class="card-body p-5"> 
+            <h2 class="h4 mb-4 fw-normal text-white">Faça seu Login</h2>
             
             <div class="form-floating mb-3 text-start">
                 <input type="email" class="form-control bg-dark text-white border-secondary" id="email" placeholder="nome@exemplo.com">
@@ -65,10 +78,20 @@
             </button>
             
             <div id="error-msg" class="mt-3 text-danger fw-bold small"></div>
+
+            <hr class="my-4 border-secondary">
+            <div class="d-grid gap-2">
+                <p class="text-secondary small mb-1">Ainda não tem acesso?</p>
+                <a href="https://wa.me/5531995012927?text=Olá%20Maicon,%20gostaria%20de%20adquirir%20acesso%20ao%20Sistema%20de%20Limpeza." 
+                   target="_blank" 
+                   class="btn btn-whatsapp py-2 fw-bold shadow-sm">
+                    <i class="bi bi-whatsapp"></i> ADQUIRIR ACESSO AGORA
+                </a>
+            </div>
         </div>
     </div>
     
-    <p class="mt-5 mb-3 text-muted">© 2025 Sistema de Limpeza Automotivo e Residencial</p>
+    <p class="mt-5 mb-3 text-muted">© 2026 Sistema de Limpeza Automotivo e Residencial</p>
 </main>
 
 <script>
@@ -77,11 +100,8 @@
     const eyeIcon = document.querySelector('#eyeIcon');
 
     togglePassword.addEventListener('click', function (e) {
-        // Alternar o tipo de atributo
         const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
         password.setAttribute('type', type);
-        
-        // Alternar o ícone
         eyeIcon.classList.toggle('bi-eye');
         eyeIcon.classList.toggle('bi-eye-slash');
     });
@@ -91,7 +111,6 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 
-  // --- IMPORTANTE: COLE SUAS CHAVES AQUI ---
   const firebaseConfig = {
     apiKey: "AIzaSyAzYgJGO6lvz7s9BMincNb-Qm9URkD8GCs",
     authDomain: "sistema-limpeza-e9e9e.firebaseapp.com",
@@ -101,7 +120,6 @@
     appId: "1:71391357517:web:6d29a0c0237d895e548a04",
     measurementId: "G-N6VQPFQ2FZ"
     };
-  // ----------------------------------------
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
@@ -111,7 +129,6 @@
   const errorMsg = document.getElementById('error-msg');
   const btnLogin = document.getElementById('btnLogin');
 
-  // Função para enviar o token para o Python
   async function enviarTokenParaBackend(user) {
       const token = await user.getIdToken();
       
@@ -130,7 +147,6 @@
       }
   }
 
-  // Evento de Login
   btnLogin.addEventListener('click', () => {
       const email = emailInput.value;
       const pass = passwordInput.value;
@@ -140,7 +156,6 @@
           return;
       }
 
-      // Estado de carregamento
       btnLogin.disabled = true;
       btnLogin.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Entrando...';
       errorMsg.textContent = "";
@@ -154,7 +169,6 @@
               btnLogin.disabled = false;
               btnLogin.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> ENTRAR';
               
-              // Mensagens de erro amigáveis em Português
               if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
                   errorMsg.textContent = "Email ou senha incorretos.";
               } else if (error.code === 'auth/invalid-email') {
@@ -167,7 +181,6 @@
           });
   });
   
-  // Permitir login com a tecla Enter
   passwordInput.addEventListener("keypress", function(event) {
     if (event.key === "Enter") {
       event.preventDefault();
